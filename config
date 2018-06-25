@@ -1,0 +1,9 @@
+numClasses 4
+numPoints 512
+numFeatures 2
+stdDev 0.05
+alphaX 0.0001 0.0001 0.0001 0.0001
+alphaY 0.0001 0.0001 0.0001 0.0001 
+windowHeight 1024
+windowWidth 1024
+colorMap Blue_Heat_Colormap
