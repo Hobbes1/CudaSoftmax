@@ -1,15 +1,6 @@
 #include "SoftmaxRegression.h"
 #include "iomanip"
 
-struct isLowerQuarter
-{
-	__host__ __device__
-	bool operator()(float value, float mapMin, float mapMax)
-	{
-		return (value < (mapMax - (mapMax - mapMin) / 4.0));
-	}
-};
-
 SoftmaxRegression::SoftmaxRegression(std::shared_ptr<SoftmaxSettings> aSettings,
 							         std::shared_ptr<SoftmaxData> aData,
 							         std::shared_ptr<GLInstance> aGLInstance) :
@@ -42,6 +33,7 @@ void SoftmaxRegression::execute()
 	std::vector<std::vector<float>>  dLogLSums(mSettings->numClasses, std::vector<float>(mSettings->numFeatures, 0.0));		// numClasses x numFeatures sum of divLogL terms to set on each regression step
 	std::vector<float> probNorms;
 	probNorms.resize(mSettings->numClasses);
+	std::string frameName;
 
 	while(!glfwWindowShouldClose(mGL->window))
 	{
@@ -181,7 +173,6 @@ void SoftmaxRegression::execute()
 		gpuErrchk(cudaPeekAtLastError());
 		gpuErrchk(cudaDeviceSynchronize());
 
-
 		ColorPointQuads<<< mRegressionBlocks, mRegressionTPB >>> 
 			(colorsPtr, 
 			 mData->devQuadIndicesPtr,
@@ -196,6 +187,28 @@ void SoftmaxRegression::execute()
 		gpuErrchk(cudaGraphicsUnmapResources(1, &mGL->cudaColorResource, 0));
 
 		Draw();
+
+		if (mSettings->recording && steps < mSettings->frames)
+		{
+			frameName = FrameNameGen(steps, mSettings->frames);
+			FormPNGData<<< mColorBlocks, mColorTPB >>> 		(colorsPtr, 
+															 mData->devPixelDataPtr, 
+															 mSettings->windowWidth, 
+															 mSettings->windowHeight);
+
+			gpuErrchk(cudaPeekAtLastError());
+
+			gpuErrchk(cudaMemcpy(mData->hostPixelData.data(),
+					   mData->devPixelDataPtr,
+					   mSettings->windowWidth * mSettings->windowHeight * 3 * sizeof(unsigned char),
+					   cudaMemcpyDeviceToHost));
+
+			gpuErrchk(cudaPeekAtLastError());
+			WritePNG(mData->hostPixelData.data(),
+					 frameName,
+					 mSettings->windowWidth,
+					 mSettings->windowHeight);
+		}
 
 		steps++;
 		cudaEventRecord(stop, 0);

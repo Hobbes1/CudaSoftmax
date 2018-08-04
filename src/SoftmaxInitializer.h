@@ -4,6 +4,8 @@
 #include <thrust/device_vector.h>
 #include <thrust/device_ptr.h>
 #include <thrust/host_vector.h>
+#include <thrust/execution_policy.h>
+#include <thrust/extrema.h>
 
 // CUDA includes
 #include <vector_types.h>
@@ -17,7 +19,7 @@
 #include <memory>
 #include <string>
 
-// Note that you could template the data such that float3 
+// Note that you could template the data such that float2
 // is replaced by floatN where N = number of features.
 // Not the colors of course, unless you have a really neat screen.
 
@@ -32,8 +34,6 @@ struct SoftmaxData
 	float2* devWeightsPtr;
 
 	thrust::host_vector<float2> hostAlphas;				// alpha parameters. Does every weight need one? Sure why not.
-	// thrust::device_vector<float3> devAlphas;
-	// float3* devAlphasPtr;
 		
 	thrust::host_vector<float3> hostColorMap;			// color data for visualization
 	thrust::device_vector<float3> devColorMap;
@@ -52,11 +52,9 @@ struct SoftmaxData
 	std::vector<std::vector<thrust::device_vector<float>>> 	devDivLogLTerms;
 	std::vector<std::vector<float*>> 						devDivLogLPtrs;
 
-		// pixel data to convert and xfer to host for recordings
-
-	// thrust::host_vector<unsigned char> hostPixelData;
-	// thrust::host_vector<unsigned char> devPixelData;
-	// unsigned char* devPixelDataPtr;
+	thrust::host_vector<uint8_t> hostPixelData;	// pixel data to convert and xfer to host for recordings
+	thrust::device_vector<uint8_t> devPixelData;
+	uint8_t* devPixelDataPtr;
 };
 
 struct SoftmaxSettings
@@ -71,6 +69,7 @@ struct SoftmaxSettings
 	int windowHeight;
 	int windowWidth;
 	bool recording;
+	int frames;
 	std::string colorMap = "";
 };
 

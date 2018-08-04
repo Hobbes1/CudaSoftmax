@@ -50,3 +50,9 @@ obj/CalculateProbability_Kernel.o: src/CalculateProbability_Kernel.cu
 
 obj/Color_Kernel.o: src/Color_Kernel.cu 
 	$(NVCC) $(NVFLAGS) -c $< -o $@ $(LIBS)
+
+obj/WritePNG.o: src/WritePNG.cpp
+	$(CC) $(CFLAGS) -c $< -o $@ -lpng
+
+obj/FormPNGData.o: src/FormPNGData.cu
+	$(NVCC) $(NVFLAGS) -c $< -o $@ $(LIBS)

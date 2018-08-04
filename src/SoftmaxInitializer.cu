@@ -15,6 +15,8 @@ void SoftmaxInitializer::initialize(std::string aConfigFileName,
  								    std::shared_ptr<SoftmaxData>& aSoftmaxData)
 {
 	_loadSettings(aConfigFileName, aSoftmaxSettings);
+	// aSoftmaxData->hostPixelData.resize(3*aSoftmaxSettings->windowWidth*aSoftmaxSettings->windowHeight);
+	// aSoftmaxData->devPixelData = aSoftmaxData->hostPixelData;
 	_loadData(aSoftmaxSettings, aSoftmaxData);
 }
 
@@ -105,6 +107,16 @@ void SoftmaxInitializer::_loadSettings(std::string aConfigFileName,
 			aSettings->plotNum = stoi(line.substr(7));
 			std::cout<<"	plotNum: "<<aSettings->plotNum<<std::endl;
 		}
+		else if (line.find("recording") != std::string::npos)
+		{
+			aSettings->recording = bool(stoi(line.substr(9)));
+			std::cout<<"	Recording: " << aSettings->recording << std::endl;
+		}
+		else if (line.find("frames") != std::string::npos)
+		{
+			aSettings->frames = stoi(line.substr(6));
+			std::cout<<"	Frames: " << aSettings->frames << std::endl;
+		}
 	}
 	configFile.close();
 }
@@ -121,6 +133,7 @@ void SoftmaxInitializer::_loadData(std::shared_ptr<SoftmaxSettings>& aSettings,
 
 		// populate point data with gaussian distributions based on settings
 
+	// populate point data with gaussian distributions based on settings
 	_genGaussians(aSettings, aData->hostPoints);
 
 	thrust::fill(aData->hostQuadIndices.begin(), aData->hostQuadIndices.end(), 0);
@@ -130,7 +143,8 @@ void SoftmaxInitializer::_loadData(std::shared_ptr<SoftmaxSettings>& aSettings,
 	aData->devDivLogLPtrs.resize(aSettings->numClasses);
 	aData->devProbFields.resize(aSettings->numClasses);
 	aData->devProbFieldPtrs.resize(aSettings->numClasses);
-
+	aData->devPixelData.resize(3 * aSettings->windowWidth * aSettings->windowHeight);
+	std::cout << "happened" << std::endl;
 	for (int classIdx = 0; classIdx < aSettings->numClasses; classIdx++)
 	{
 		aData->hostDivLogLTerms[classIdx].resize(aSettings->numFeatures);
@@ -156,24 +170,21 @@ void SoftmaxInitializer::_loadData(std::shared_ptr<SoftmaxSettings>& aSettings,
 		// let thrust do cudaMemCopy for us
 
 	aData->devPoints = aData->hostPoints;
-	gpuErrchk(cudaDeviceSynchronize());
 	aData->devQuadIndices = aData->hostQuadIndices;
 	aData->devWeights = aData->hostWeights;
 
 		// and get raw data pointers for the device kernels
-
 	aData->devPointsPtr = thrust::raw_pointer_cast(aData->devPoints.data());
 	aData->devQuadIndicesPtr = thrust::raw_pointer_cast(aData->devQuadIndices.data());
 	aData->devWeightsPtr = thrust::raw_pointer_cast(aData->devWeights.data());
 
-	std::cout << "size: " << aData->hostProbFields[0].size() << std::endl;
 	for (int classIdx = 0;classIdx < aSettings->numClasses; classIdx++)
 	{
 		aData->devProbFields[classIdx].resize(aSettings->windowWidth * aSettings->windowHeight);
 		aData->devProbFields[classIdx] = aData->hostProbFields[classIdx];
 		aData->devProbFieldPtrs[classIdx] = thrust::raw_pointer_cast(aData->devProbFields[classIdx].data());
-
 	}
+	std::cout << "happened" << std::endl;
 
 	aData->hostColorMap.resize(512);
 	std::ifstream colorfile("data/Hot_Cold_No_Zero", std::ifstream::in);
@@ -233,6 +244,7 @@ void SoftmaxInitializer::_genGaussians(std::shared_ptr<SoftmaxSettings>& aSettin
 	}
 
 	float gaussMean = 0.0;					// Setting, TODO Config->CLI handler
+	
 	float gaussStdDev = aSettings->stdDev; 	// Setting, TODO Config->CLI handler
 
 	std::default_random_engine gen;

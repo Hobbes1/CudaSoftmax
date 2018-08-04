@@ -12,6 +12,7 @@
 // project includes
 #include "SoftmaxInitializer.h"
 #include "GLInstance.h"
+#include "WritePNG.h"
 
 #include <memory>
 
@@ -143,6 +144,11 @@ CUDA_KERNEL_MEMBER void RemoveLowers	     (float* __restrict__ probability,
 											  unsigned int windowHeight,
 							  				  float mapMin,
 							  				  float mapMax);
+
+CUDA_KERNEL_MEMBER void FormPNGData 	 (float3* colors,
+										  unsigned char* pixelData, 
+										  unsigned int simWidth, 
+										  unsigned int simHeight);
 
 // 	/* Computes the inner product between two 3-vectors,
 // 	 * the parameters go left to right
