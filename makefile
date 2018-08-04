@@ -12,7 +12,7 @@ CC = g++
 CFLAGS = --std=c++11
 
 NVCC = nvcc
-NVFLAGS = -arch=sm_30 --std=c++11 -D_MWAITXINTRIN_H_INCLUDED -D__STRING_ANSI__ 
+NVFLAGS = -arch=sm_61 --std=c++11 -D_MWAITXINTRIN_H_INCLUDED -D__STRING_ANSI__ 
 #vmc: $(OBJ_FILES) 
 #	$(NVCC) $(NVFLAGS) -o vmc $(OBJDIR)/main.o $(LIBS)
 

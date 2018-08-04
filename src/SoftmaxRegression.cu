@@ -55,9 +55,7 @@ void SoftmaxRegression::execute()
 													   *&mGL->cudaColorResource));
 
 
-		///
-		/// The following kernels make up the softmax regression algorithm
-		///
+			// Take dLogL for each class, filling each derivative vector
 
 		for (int classIdx = 0; classIdx < mSettings->numClasses; ++classIdx)
 		{
@@ -70,39 +68,46 @@ void SoftmaxRegression::execute()
     		     mSettings->numPoints,																																	 
 	  		     classIdx,
 	  		     mSettings->numClasses);
+				
 			gpuErrchk(cudaDeviceSynchronize());
-			gpuErrchk(cudaPeekAtLastError());
 		}
 
 		gpuErrchk(cudaDeviceSynchronize());
-		std::cout << "	" << steps << std::endl;
+
+			// Sum the derivative vectors
+
 		for (int classIdx = 0; classIdx < mSettings->numClasses; ++classIdx)
 		{
 			for (int featureIdx = 0; featureIdx < mSettings->numFeatures; ++featureIdx)
 			{
-		        dLogLSums[classIdx][featureIdx] = thrust::reduce(mData->devDivLogLTerms[classIdx][featureIdx].begin(), mData->devDivLogLTerms[classIdx][featureIdx].end());						  				  		 
-		        std::cout << " SUM: " << std::setw(5) << classIdx << std::setw(5) << featureIdx << ":" << std::setw(5) << dLogLSums[classIdx][featureIdx] << std::setw(5);
+		        dLogLSums[classIdx][featureIdx] = thrust::reduce(mData->devDivLogLTerms[classIdx][featureIdx].begin(), 
+		        									             mData->devDivLogLTerms[classIdx][featureIdx].end());						  				  		 
 			}
-			std::cout  << std::endl;
 		}
-		std::cout << std::endl << std::endl; 
 
 		gpuErrchk(cudaDeviceSynchronize());
+
+			// reset the derivative vectors for the next iteration
 
 		for (int classIdx = 0; classIdx < mSettings->numClasses; ++classIdx)
 		{
 			for (int f = 0; f < mSettings->numFeatures; ++f)
 			{
-				thrust::fill(mData->devDivLogLTerms[classIdx][f].begin(), mData->devDivLogLTerms[classIdx][f].end(), 0.0);
+				thrust::fill(mData->devDivLogLTerms[classIdx][f].begin(), 
+					         mData->devDivLogLTerms[classIdx][f].end(),
+					         0.0);
 			}
-			gpuErrchk(cudaDeviceSynchronize());
 		}	
+
+			// update the weights using the sums and scaling factors
 
 		for (int classIdx = 0; classIdx < mSettings->numClasses; ++classIdx)
 		{
 			mData->hostWeights[classIdx].x += mData->hostAlphas[classIdx].x * dLogLSums[classIdx][0];
 			mData->hostWeights[classIdx].y += mData->hostAlphas[classIdx].y * dLogLSums[classIdx][1];
 		}
+
+			// copy the updated weights from the host to the device for the next iteration
 
 		mData->devWeights = mData->hostWeights;
 		mData->devWeightsPtr = thrust::raw_pointer_cast(mData->devWeights.data());

@@ -1,7 +1,7 @@
 numClasses 4
 numPoints 512
 numFeatures 2
-stdDev 0.05
+stdDev 0.03
 alphaX 0.0001 0.0001 0.0001 0.0001
 alphaY 0.0001 0.0001 0.0001 0.0001 
 windowHeight 1024
