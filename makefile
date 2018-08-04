@@ -12,7 +12,7 @@ CC = g++
 CFLAGS = --std=c++11
 
 NVCC = nvcc
-NVFLAGS = -arch=sm_30 --std=c++11 -D_MWAITXINTRIN_H_INCLUDED -D__STRING_ANSI__ 
+NVFLAGS = -arch=sm_30 -g --std=c++11 -D_MWAITXINTRIN_H_INCLUDED -D__STRING_ANSI__ 
 #vmc: $(OBJ_FILES) 
 #	$(NVCC) $(NVFLAGS) -o vmc $(OBJDIR)/main.o $(LIBS)
 
@@ -49,4 +49,10 @@ obj/CalculateProbability_Kernel.o: src/CalculateProbability_Kernel.cu
 	$(NVCC) $(NVFLAGS) -c $< -o $@ $(LIBS)
 
 obj/Color_Kernel.o: src/Color_Kernel.cu 
+	$(NVCC) $(NVFLAGS) -c $< -o $@ $(LIBS)
+
+obj/WritePNG.o: src/WritePNG.cpp
+	$(CC) $(CFLAGS) -c $< -o $@ -lpng
+
+obj/FormPNGData.o: src/FormPNGData.cu
 	$(NVCC) $(NVFLAGS) -c $< -o $@ $(LIBS)

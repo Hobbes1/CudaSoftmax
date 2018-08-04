@@ -83,7 +83,7 @@ __global__ void ColorPointQuads(float3* colors,
     if (quadIndex <= 0) return;
 	for (int i = 0; i < 4; i++)
 	{
-		colors[4 * quadIndex + i] = make_float3(0.7, 0.7, 1.0);
+		colors[4 * quadIndex + i] = make_float3(0.1, 1.0, 0.2);
 	}
 
 	__syncthreads();
